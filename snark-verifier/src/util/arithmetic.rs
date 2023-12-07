@@ -1,6 +1,7 @@
 //! Arithmetic related re-exported traits and utilities.
 
 use crate::util::Itertools;
+use borsh::{BorshDeserialize, BorshSerialize};
 use num_bigint::BigUint;
 use num_traits::One;
 use std::{
@@ -90,7 +91,7 @@ pub fn root_of_unity<F: PrimeField>(k: usize) -> F {
 }
 
 /// Rotation on a group.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, BorshSerialize, BorshDeserialize)]
 pub struct Rotation(pub i32);
 
 impl Rotation {

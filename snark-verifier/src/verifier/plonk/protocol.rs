@@ -13,9 +13,13 @@ use std::{
     iter::{self, Sum},
     ops::{Add, Mul, Neg, Sub},
 };
+use borsh::{
+    BorshSerialize,
+    BorshDeserialize,
+};
 
 /// Protocol specifying configuration of a PLONK.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct PlonkProtocol<C, L = NativeLoader>
 where
     C: CurveAffine,
@@ -275,7 +279,7 @@ impl<F: Clone> QuotientPolynomial<F> {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, BorshSerialize, BorshDeserialize)]
 pub struct Query {
     pub poly: usize,
     pub rotation: Rotation,
@@ -500,7 +504,7 @@ fn merge_left_right<T: Ord>(a: Option<BTreeSet<T>>, b: Option<BTreeSet<T>>) -> O
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, BorshSerialize, BorshDeserialize)]
 pub enum LinearizationStrategy {
     /// Older linearization strategy of GWC19, which has linearization
     /// polynomial that doesn't evaluate to 0, and requires prover to send extra
