@@ -10,6 +10,7 @@ mod multiopen;
 
 pub use accumulation::{KzgAs, KzgAsProvingKey, KzgAsVerifyingKey};
 pub use accumulator::{KzgAccumulator, LimbsEncoding};
+use borsh::{BorshDeserialize, BorshSerialize};
 pub use decider::KzgDecidingKey;
 pub use multiopen::{Bdfg21, Bdfg21Proof, Gwc19, Gwc19Proof};
 
@@ -17,7 +18,7 @@ pub use multiopen::{Bdfg21, Bdfg21Proof, Gwc19, Gwc19Proof};
 pub use accumulator::LimbsEncodingInstructions;
 
 /// KZG succinct verifying key.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, BorshSerialize, BorshDeserialize)]
 pub struct KzgSuccinctVerifyingKey<C: CurveAffine> {
     /// Generator.
     pub g: C,
