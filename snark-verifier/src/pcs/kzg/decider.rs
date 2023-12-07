@@ -1,8 +1,12 @@
 use crate::{pcs::kzg::KzgSuccinctVerifyingKey, util::arithmetic::MultiMillerLoop};
 use std::marker::PhantomData;
+use borsh::{
+    BorshSerialize,
+    BorshDeserialize,
+};
 
 /// KZG deciding key.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, BorshSerialize, BorshDeserialize)]
 pub struct KzgDecidingKey<M: MultiMillerLoop> {
     /// KZG succinct verifying key.
     pub svk: KzgSuccinctVerifyingKey<M::G1Affine>,
