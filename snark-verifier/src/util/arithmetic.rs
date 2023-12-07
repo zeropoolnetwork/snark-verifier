@@ -118,7 +118,7 @@ impl From<i32> for Rotation {
 }
 
 /// 2-adicity multiplicative domain
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct Domain<F: PrimeField> {
     /// Log size of the domain.
     pub k: usize,

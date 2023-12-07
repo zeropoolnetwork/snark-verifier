@@ -264,7 +264,7 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct QuotientPolynomial<F: Clone> {
     pub chunk_degree: usize,
     // Note that `num_chunk` might be larger than necessary, due to the degree
@@ -516,7 +516,7 @@ pub enum LinearizationStrategy {
     MinusVanishingTimesQuotient,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, BorshSerialize, BorshDeserialize)]
 pub struct InstanceCommittingKey<C> {
     pub bases: Vec<C>,
     pub constant: Option<C>,
