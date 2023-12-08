@@ -11,7 +11,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
     iter::{self, Sum},
-    ops::{Add, Mul, Neg, Sub},
+    ops::{Add, Mul, Neg, Sub}, io::{Write, Result},
 };
 use borsh::{
     BorshSerialize,
@@ -170,7 +170,7 @@ mod halo2 {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, BorshDeserialize, BorshSerialize)]
 pub enum CommonPolynomial {
     Identity,
     Lagrange(i32),
@@ -305,6 +305,103 @@ pub enum Expression<F> {
     Product(Box<Expression<F>>, Box<Expression<F>>),
     Scaled(Box<Expression<F>>, F),
     DistributePowers(Vec<Expression<F>>, Box<Expression<F>>),
+}
+
+/// Like `Expression`, but keeps its children nodes in a vector instead of
+/// heap. This helps avoid unconstrained branching in Boxes and implement Borsh
+/// serialization easily.
+///
+/// We use Reverse Polish Notation to flatten the expression tree when
+/// serializing, and interpret it back using stack when serializing. RPN allows
+/// for duplication-free, unambiguous, efficient encoding of tree structures.
+#[derive(BorshSerialize, BorshDeserialize)]
+enum ExpressionFlat<F> {
+    Constant(F),
+    CommonPolynomial(CommonPolynomial),
+    Polynomial(Query),
+    Challenge(usize),
+    Negated,
+    Sum,
+    Product,
+    Scaled(F),
+    DistributePowers,
+}
+
+impl<F: BorshSerialize + Clone> BorshSerialize for Expression<F> {
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        match self {
+            Expression::Constant(x) =>
+                ExpressionFlat::Constant(x).serialize(writer)?,
+            Expression::CommonPolynomial(x) =>
+                ExpressionFlat::<F>::CommonPolynomial(*x).serialize(writer)?,
+            Expression::Polynomial(x) =>
+                ExpressionFlat::<F>::Polynomial(*x).serialize(writer)?,
+            Expression::Challenge(x) =>
+                ExpressionFlat::<F>::Challenge(*x).serialize(writer)?,
+            Expression::Negated(e) => {
+                ExpressionFlat::<F>::Negated.serialize(writer)?;
+                e.serialize(writer)?;
+            },
+            Expression::Sum(e_left, e_right) => {
+                ExpressionFlat::<F>::Sum.serialize(writer)?;
+                e_left.serialize(writer)?;
+                e_right.serialize(writer)?;
+            },
+            Expression::Product(e_left, e_right) => {
+                ExpressionFlat::<F>::Product.serialize(writer)?;
+                e_left.serialize(writer)?;
+                e_right.serialize(writer)?;
+            },
+            Expression::Scaled(e, x) => {
+                ExpressionFlat::<F>::Scaled(x.clone()).serialize(writer)?;
+                e.serialize(writer)?;
+            },
+            Expression::DistributePowers(es, e) => {
+                ExpressionFlat::<F>::DistributePowers.serialize(writer)?;
+                es.serialize(writer)?;
+                e.serialize(writer)?;
+            },
+        }
+        Ok(())
+    }
+}
+
+impl<F: BorshDeserialize + Clone> BorshDeserialize for Expression<F> {
+    fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+        match ExpressionFlat::<F>::deserialize(buf)? {
+            ExpressionFlat::Constant(x) =>
+                Ok(Expression::Constant(x)),
+            ExpressionFlat::<F>::CommonPolynomial(x) =>
+                Ok(Expression::CommonPolynomial(x)) ,
+            ExpressionFlat::<F>::Polynomial(x) =>
+                Ok(Expression::Polynomial(x)),
+            ExpressionFlat::<F>::Challenge(x) =>
+                Ok(Expression::Challenge(x)),
+            ExpressionFlat::<F>::Negated => {
+                let e = Expression::deserialize(buf)?;
+                Ok(Expression::Negated(Box::new(e)))
+            },
+            ExpressionFlat::<F>::Sum => {
+                let e_left = Expression::deserialize(buf)?;
+                let e_right = Expression::deserialize(buf)?;
+                Ok(Expression::Sum(Box::new(e_left), Box::new(e_right)))
+            },
+            ExpressionFlat::<F>::Product => {
+                let e_left = Expression::deserialize(buf)?;
+                let e_right = Expression::deserialize(buf)?;
+                Ok(Expression::Product(Box::new(e_left), Box::new(e_right)))
+            },
+            ExpressionFlat::<F>::Scaled(x) => {
+                let e = Expression::deserialize(buf)?;
+                Ok(Expression::Scaled(Box::new(e), x))
+            },
+            ExpressionFlat::<F>::DistributePowers => {
+                let es = Vec::<Expression<F>>::deserialize(buf)?;
+                let e = Expression::deserialize(buf)?;
+                Ok(Expression::DistributePowers(es, Box::new(e)))
+            },
+        }
+    }
 }
 
 impl<F: Clone> Expression<F> {
