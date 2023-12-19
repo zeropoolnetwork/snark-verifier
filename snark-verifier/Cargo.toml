@@ -18,7 +18,7 @@ halo2_curves = { git = "https://github.com/privacy-scaling-explorations/halo2cur
 rayon = { version = "1.5.3", optional = true }
 
 # system_halo2
-halo2_proofs = { git = "https://github.com/zeropoolnetwork/halo2", branch = "zeropool-near", optional = true }
+halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2", tag = "v2023_04_20", optional = true }
 
 # loader_evm
 sha3 = { version = "0.10", optional = true }
