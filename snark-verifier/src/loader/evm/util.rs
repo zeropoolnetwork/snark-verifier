@@ -10,10 +10,6 @@ use std::{
 
 pub use primitive_types::{H160 as Address, H256, U256, U512};
 
-pub(crate) mod executor;
-
-pub use executor::ExecutorBuilder;
-
 /// Memory chunk in EVM.
 #[derive(Debug)]
 pub struct MemoryChunk {
